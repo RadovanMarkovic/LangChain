@@ -75,13 +75,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-files",
         type=int,
-        default=12,
+        default=6,
         help="Maximum number of important files to read from the repository.",
     )
     parser.add_argument(
         "--max-chars-per-file",
         type=int,
-        default=6_000,
+        default=3_000,
         help="Maximum characters to read from each selected repository file.",
     )
     parser.add_argument(

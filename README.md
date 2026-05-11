@@ -43,9 +43,8 @@ Aplikacija ne cita ceo repozitorijum. Cita najvise nekoliko vaznih fajlova, na p
 - `pyproject.toml`
 - `.env.example`
 - jedan ili dva source/config fajla kao `main.py`, `app.py`, `index.ts`
-- dodatne reprezentativne source fajlove iz foldera kao `src`, `app`, `backend`, `frontend`, `lib`
 
-Podrazumevano cita najvise 12 fajlova i najvise 6000 karaktera po fajlu.
+Podrazumevano cita najvise 6 fajlova i najvise 3000 karaktera po fajlu da bi lokalni modeli radili brze.
 
 ## 1. Napravi virtualno okruzenje
 
@@ -146,15 +145,10 @@ Koriscenje Ollama providera:
 python main.py https://github.com/psf/requests --provider ollama --model llama3.2
 ```
 
-Ako lokalni model i dalje daje plitak odgovor, smanji broj fajlova ili povecaj Ollama context:
+Ako lokalni model radi sporo, dodatno smanji broj fajlova:
 
 ```bash
-python main.py https://github.com/psf/requests --provider ollama --model llama3.2 --max-files 8
-```
-
-```env
-OLLAMA_NUM_CTX=8192
-OLLAMA_CONTEXT_CHARS=24000
+python main.py https://github.com/psf/requests --provider ollama --model llama3.2 --max-files 4
 ```
 
 Koriscenje Ollama providera sa custom base URL:
