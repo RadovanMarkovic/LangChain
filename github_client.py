@@ -47,6 +47,33 @@ SOURCE_ENTRYPOINT_NAMES = [
     "App.tsx",
 ]
 
+SOURCE_FILE_EXTENSIONS = {
+    ".py",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".go",
+    ".rs",
+    ".java",
+    ".kt",
+    ".cs",
+    ".php",
+    ".rb",
+}
+
+SOURCE_DIR_PREFIXES = (
+    "src/",
+    "app/",
+    "server/",
+    "backend/",
+    "frontend/",
+    "lib/",
+    "api/",
+    "pages/",
+    "components/",
+)
+
 
 @dataclass
 class RepositoryFile:
@@ -167,7 +194,7 @@ def parse_github_url(repository_url: str) -> tuple[str, str]:
 
 
 def select_important_paths(tree_items: list[dict[str, Any]], max_files: int = 8) -> list[str]:
-    # Bira fajlove deterministicki: root config, nested config, pa entry-point fajlovi.
+    # Bira fajlove deterministicki: root docs/config, entry-point, pa reprezentativan source.
     file_paths = sorted(
         item["path"]
         for item in tree_items
@@ -206,6 +233,13 @@ def select_important_paths(tree_items: list[dict[str, Any]], max_files: int = 8)
         if len(selected) >= max_files:
             return selected
 
+    # Ako repo nema ocigledan main/app fajl, uzmi male reprezentativne source fajlove.
+    # Ovo je vazno za lokalne manje modele, jer README + config cesto nisu dovoljni za dobru analizu.
+    for candidate in _representative_source_paths(file_paths):
+        _append_unique(selected, candidate, max_files)
+        if len(selected) >= max_files:
+            return selected
+
     # Nested README fajlovi su korisni, ali tek posle jacih project-level fajlova.
     for candidate in _nested_matching_paths(file_paths, "README.md"):
         _append_unique(selected, candidate, max_files)
@@ -229,9 +263,37 @@ def _append_unique(selected: list[str], path: str, max_files: int) -> None:
 
 def _source_path_score(path: str) -> tuple[int, int, str]:
     # Rangira source foldere pre primera ili duboko ugnjezdenih fajlova.
-    preferred_prefixes = ("src/", "app/", "server/", "backend/", "frontend/")
-    prefix_score = 0 if path.startswith(preferred_prefixes) else 1
+    prefix_score = 0 if path.startswith(SOURCE_DIR_PREFIXES) else 1
     return prefix_score, path.count("/"), path
+
+
+def _representative_source_paths(file_paths: list[str]) -> list[str]:
+    candidates = [
+        path
+        for path in file_paths
+        if _has_source_extension(path) and not _looks_like_test_or_example_file(path)
+    ]
+    candidates.sort(key=_source_path_score)
+    return candidates
+
+
+def _has_source_extension(path: str) -> bool:
+    _, extension = os.path.splitext(path)
+    return extension in SOURCE_FILE_EXTENSIONS
+
+
+def _looks_like_test_or_example_file(path: str) -> bool:
+    lowered = path.lower()
+    parts = lowered.split("/")
+    if any(part in {"test", "tests", "__tests__", "spec", "specs", "examples", "example"} for part in parts):
+        return True
+    filename = parts[-1]
+    return (
+        filename.startswith("test_")
+        or filename.endswith("_test.py")
+        or ".test." in filename
+        or ".spec." in filename
+    )
 
 
 def _looks_like_generated_or_vendor_file(path: str) -> bool:

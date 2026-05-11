@@ -1,4 +1,5 @@
 import argparse
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -20,7 +21,11 @@ def main() -> None:
         # Preuzima metadata repozitorijuma i mali skup vaznih fajlova.
         client = GitHubClient()
         repository = client.get_repository(repository_url)
-        files = client.fetch_important_files(repository, max_files=args.max_files)
+        files = client.fetch_important_files(
+            repository,
+            max_files=args.max_files,
+            max_chars_per_file=args.max_chars_per_file,
+        )
 
         if not files:
             print("No important files were found to analyze.")
@@ -33,7 +38,13 @@ def main() -> None:
 
         # Salje izabrani kontekst LangChain-u da napravi summary.
         print("\nAnalyzing repository with LangChain...\n")
-        summary = analyze_repository(repository, files, model=args.model)
+        summary = analyze_repository(
+            repository,
+            files,
+            provider=args.provider,
+            model=args.model,
+            base_url=args.base_url,
+        )
 
         # Cuva isti summary koji se ispisuje u terminalu.
         output_path = Path(args.output)
@@ -64,13 +75,30 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-files",
         type=int,
-        default=8,
+        default=12,
         help="Maximum number of important files to read from the repository.",
+    )
+    parser.add_argument(
+        "--max-chars-per-file",
+        type=int,
+        default=6_000,
+        help="Maximum characters to read from each selected repository file.",
     )
     parser.add_argument(
         "--model",
         default=None,
-        help="OpenAI chat model name. Defaults to LLM_MODEL or gpt-4o-mini.",
+        help="Model name for the selected provider. Defaults to LLM_MODEL or a provider-specific fallback.",
+    )
+    parser.add_argument(
+        "--provider",
+        default=os.getenv("LLM_PROVIDER", "openai"),
+        choices=("openai", "ollama"),
+        help="LLM provider to use. Defaults to LLM_PROVIDER or openai.",
+    )
+    parser.add_argument(
+        "--base-url",
+        default=None,
+        help="Optional base URL for providers such as Ollama. Defaults to OLLAMA_BASE_URL or http://localhost:11434 for Ollama.",
     )
     return parser.parse_args()
 

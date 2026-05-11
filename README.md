@@ -2,7 +2,7 @@
 
 Jednostavna MVP Python aplikacija koja analizira GitHub repozitorijum.
 
-Aplikacija prima GitHub repository URL, preko GitHub API-ja procita osnovne informacije i nekoliko vaznih fajlova, zatim koristi LangChain i OpenAI model da napravi kratak summary projekta.
+Aplikacija prima GitHub repository URL, preko GitHub API-ja procita osnovne informacije i nekoliko vaznih fajlova, zatim koristi LangChain i izabrani model da napravi kratak summary projekta.
 
 Rezultat se:
 
@@ -43,8 +43,9 @@ Aplikacija ne cita ceo repozitorijum. Cita najvise nekoliko vaznih fajlova, na p
 - `pyproject.toml`
 - `.env.example`
 - jedan ili dva source/config fajla kao `main.py`, `app.py`, `index.ts`
+- dodatne reprezentativne source fajlove iz foldera kao `src`, `app`, `backend`, `frontend`, `lib`
 
-Podrazumevano cita najvise 8 fajlova.
+Podrazumevano cita najvise 12 fajlova i najvise 6000 karaktera po fajlu.
 
 ## 1. Napravi virtualno okruzenje
 
@@ -104,14 +105,20 @@ Otvori `.env` i zameni placeholder vrednosti svojim kljucevima:
 ```env
 OPENAI_API_KEY=tvoj_openai_api_key
 GITHUB_TOKEN=tvoj_github_token
+LLM_PROVIDER=openai
 LLM_MODEL=gpt-4o-mini
+OLLAMA_BASE_URL=http://localhost:11434
 ```
 
-`OPENAI_API_KEY` je obavezan.
+`OPENAI_API_KEY` je obavezan samo ako koristis `openai`.
 
 `GITHUB_TOKEN` nije obavezan, ali je preporucen zbog GitHub rate limita.
 
-`LLM_MODEL` je opcionalan. Ako ga ne promenis, koristi se `gpt-4o-mini`.
+`LLM_PROVIDER` je opcionalan. Ako ga ne promenis, koristi se `openai`.
+
+`LLM_MODEL` je opcionalan. Ako ga ne promenis, koristi se `gpt-4o-mini` za OpenAI ili `llama3.2` za Ollama.
+
+`OLLAMA_BASE_URL` je opcionalan i potreban je samo za Ollama setup. Podrazumevana vrednost je `http://localhost:11434`.
 
 ## 5. Pokreni aplikaciju
 
@@ -132,6 +139,44 @@ Specifican model preko argumenta:
 ```bash
 python main.py https://github.com/psf/requests --model gpt-4o-mini
 ```
+
+Koriscenje Ollama providera:
+
+```bash
+python main.py https://github.com/psf/requests --provider ollama --model llama3.2
+```
+
+Ako lokalni model i dalje daje plitak odgovor, smanji broj fajlova ili povecaj Ollama context:
+
+```bash
+python main.py https://github.com/psf/requests --provider ollama --model llama3.2 --max-files 8
+```
+
+```env
+OLLAMA_NUM_CTX=8192
+OLLAMA_CONTEXT_CHARS=24000
+```
+
+Koriscenje Ollama providera sa custom base URL:
+
+```bash
+python main.py https://github.com/psf/requests --provider ollama --model llama3.2 --base-url http://localhost:11434
+```
+
+## 6. Ollama setup
+
+Ako zelis da aplikaciju pokreces bez OpenAI API-ja, mozes koristiti lokalne Ollama modele.
+
+1. Instaliraj Ollama.
+2. Preuzmi model, na primer:
+
+```bash
+ollama pull llama3.2
+```
+
+3. Pokreni aplikaciju sa `--provider ollama`.
+
+Na slabijem laptopu mozes probati i manje modele, na primer `qwen2.5:3b`.
 
 ## 7. Output
 
