@@ -56,19 +56,6 @@ python -m venv .venv
 
 Izaberi komandu za terminal koji koristis.
 
-### Windows PowerShell
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-Ako PowerShell blokira aktivaciju, pokreni:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\.venv\Scripts\Activate.ps1
-```
-
 ### Git Bash na Windows-u
 
 ```bash
@@ -82,12 +69,6 @@ source .venv/bin/activate
 ```
 
 Ta putanja je za Linux/macOS. Na Windows-u virtual environment koristi `.venv/Scripts`.
-
-### Command Prompt
-
-```cmd
-.venv\Scripts\activate.bat
-```
 
 ## 3. Instaliraj dependencies
 
@@ -181,4 +162,3 @@ repository_summary.md
 ```
 
 Ako koristis `--output`, rezultat se cuva u fajl koji navedes.
-
